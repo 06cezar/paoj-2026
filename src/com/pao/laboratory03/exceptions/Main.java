@@ -1,5 +1,10 @@
 package com.pao.laboratory03.exceptions;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+
 /**
  * Exercițiul 3 — Excepții (checked, unchecked, custom)
  *
@@ -59,8 +64,95 @@ package com.pao.laboratory03.exceptions;
  * Metoda process() a aruncat: Vârsta 999 nu este validă (0-150)
  */
 public class Main {
+
+    public static void riskyMethod() {
+        // throw new NullPointerException();
+        String s = null;
+        System.out.println(s.length());
+    }
+
+    public static void validateAge(int age) {
+        if(age < 0 || age > 150)
+            throw new InvalidAgeException("Varsta " + age + " nu este validă (0-150)!");
+    }
+
+    public static void addToList(List<String> list, String name) {
+        for(String nume : list) {
+            if(Objects.equals(nume, name)) throw new DuplicateEntryException("'" + name + "' exista deja in lista!");
+        }
+        list.add(name);
+    }
+
+    public static void process(int age) throws InvalidAgeException {
+        validateAge(age);
+    }
     public static void main(String[] args) {
-        // TODO: implementează pașii de mai sus
+        System.out.println("a)");
+        try {
+            riskyMethod();
+        } catch(NullPointerException e) {
+            System.out.println("Prins: " + e.getMessage());
+        }
+        finally {
+            System.out.println("Finally se execută mereu!");
+        }
+
+        System.out.println();
+        System.out.println("b)");
+        try {
+            validateAge(-1);
+        } catch (InvalidAgeException e) {
+            System.out.println("Eroare: " + e.getMessage());
+        }
+
+        List<String> lista = new ArrayList<>(Arrays.asList("Ana", "Mihai", "Ion"));
+        try {
+            addToList(lista, "Ana");
+        } catch (DuplicateEntryException e) {
+            System.out.println("Eroare: " + e.getMessage());
+        }
+
+        System.out.println();
+        System.out.println("c)");
+        try {
+            validateAge(160);
+        } catch (InvalidAgeException | DuplicateEntryException e) {
+            System.out.println("Eroare: " + e.getMessage());
+        }
+
+        System.out.println();
+        System.out.println("d)");
+
+        try {
+            validateAge(170);
+        } catch (InvalidAgeException e) {
+            System.out.println("Eroare: " + e.getMessage());
+        }
+        catch (RuntimeException e) {
+            System.out.println("Eroare: " + e.getMessage());
+        }
+
+        /*
+        try {
+            validateAge(170);
+        } catch (RuntimeException e) {
+            System.out.println("Eroare: " + e.getMessage());
+        }
+        catch (InvalidAgeException e) { // java: exception com.pao.laboratory03.exceptions.InvalidAgeException has already been caught
+            System.out.println("Eroare: " + e.getMessage());
+        }
+        */
+
+
+        System.out.println();
+        System.out.println("e)");
+
+        try {
+            process(-90);
+        } catch (InvalidAgeException e) {
+            System.out.println("Eroare: " + e.getMessage());
+        }
+
         // Hint: creează mai întâi InvalidAgeException.java și DuplicateEntryException.java
     }
 }

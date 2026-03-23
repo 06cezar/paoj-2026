@@ -1,0 +1,11 @@
+package com.pao.laboratory05.playlist;
+
+import java.util.Comparator;
+
+public class SongDurationComparator implements Comparator<Song> {
+    @Override
+    public int compare(Song o1, Song o2) {
+        return Integer.compare(o1.durationSeconds(), o2.durationSeconds());
+        // compare: sortare după durationSeconds crescător
+    }
+}

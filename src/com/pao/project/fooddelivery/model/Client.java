@@ -27,7 +27,6 @@ public class Client extends Person {
 
     @Override
     public String toString() {
-        return super.toString() + ", adrese=" + addresses.size() + "]";
-        // doar nr de adrese
+        return "Client[" + baseFields() + ", adrese=" + addresses.size() + "]";
     }
 }

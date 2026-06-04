@@ -38,11 +38,15 @@ public abstract class Person {
     
     public void setPhone(String phone) { this.phone = phone; }
 
+    // Subclasele folosesc aceasta metoda pentru a include campurile din Person
+    // in propriul toString(), fara sa depinda de formatul parintelui.
+    protected String baseFields() {
+        return "id=" + id + ", nume=" + name + ", email=" + email + ", telefon=" + phone;
+    }
+
     @Override
     public String toString() {
-        return getRole() + "[id=" + id + ", nume=" + name + ", email=" + email + ", telefon=" + phone;
-        // nu inchid ] intrucat e clasa abstracta; o sa inchid dupa ce afisez si restul
-        // campurilor in subclase
+        return getRole() + "[" + baseFields() + "]";
     }
 
     @Override

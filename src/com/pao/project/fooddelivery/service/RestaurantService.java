@@ -1,5 +1,6 @@
 package com.pao.project.fooddelivery.service;
 
+import com.pao.project.fooddelivery.exception.ClientNotFoundException;
 import com.pao.project.fooddelivery.exception.DuplicateIdException;
 import com.pao.project.fooddelivery.exception.InvalidDataException;
 import com.pao.project.fooddelivery.exception.RestaurantNotFoundException;
@@ -17,7 +18,7 @@ import java.util.Map;
 public class RestaurantService {
     private static RestaurantService instance;
 
-    private final Map<String, Restaurant> restaurants;  // Map<id, Restaurant> - indexare rapida
+    private final Map<String, Restaurant> restaurants;
     private final List<Client> clients;
 
     private RestaurantService() {
@@ -25,24 +26,25 @@ public class RestaurantService {
         this.clients = new ArrayList<>();
     }
 
-    public static RestaurantService getInstance() {
+    public static synchronized RestaurantService getInstance() {
         if (instance == null) {
             instance = new RestaurantService();
         }
         return instance;
     }
 
-    // Actiunea 1: Adauga restaurant
+    // Actiunea 1
     public void addRestaurant(Restaurant restaurant) {
         if (restaurant == null) throw new InvalidDataException("Restaurantul este obligatoriu.");
         if (restaurants.containsKey(restaurant.getId())) {
             throw new DuplicateIdException("Restaurant cu id=" + restaurant.getId() + " exista deja.");
         }
         restaurants.put(restaurant.getId(), restaurant);
+        AuditService.getInstance().log("adauga_restaurant");
         System.out.println("[OK] Restaurant adaugat: " + restaurant.getName());
     }
 
-    // Actiunea 2: Adauga client
+    // Actiunea 2
     public void addClient(Client client) {
         if (client == null) throw new InvalidDataException("Clientul este obligatoriu.");
         for (Client c : clients) {
@@ -51,17 +53,19 @@ public class RestaurantService {
             }
         }
         clients.add(client);
+        AuditService.getInstance().log("adauga_client");
         System.out.println("[OK] Client inregistrat: " + client.getName());
     }
 
-    // Actiunea 4: Adauga produs la meniu
+    // Actiunea 4
     public void addProductToMenu(String restaurantId, Product product) throws RestaurantNotFoundException {
         Restaurant restaurant = findRestaurantById(restaurantId);
         restaurant.getMenu().addProduct(product);
+        AuditService.getInstance().log("adauga_produs_la_meniu");
         System.out.println("[OK] Produs adaugat: " + product.getName() + " -> " + restaurant.getName());
     }
 
-    // Actiunea 8: Cauta restaurante dupa categorie
+    // Actiunea 8
     public List<Restaurant> findByCategory(String category) {
         if (category == null || category.isEmpty()) throw new InvalidDataException("Categoria este obligatorie.");
         List<Restaurant> results = new ArrayList<>();
@@ -70,10 +74,10 @@ public class RestaurantService {
                 results.add(r);
             }
         }
+        AuditService.getInstance().log("cauta_restaurante_dupa_categorie");
         return results;
     }
 
-    // Update restaurant
     public void updateRestaurant(String id, String newName, Address newAddress, String newCategory)
             throws RestaurantNotFoundException {
         Restaurant restaurant = findRestaurantById(id);
@@ -83,7 +87,6 @@ public class RestaurantService {
         System.out.println("[OK] Restaurant actualizat: " + restaurant.getName());
     }
 
-    // Delete restaurant
     public void deleteRestaurant(String id) throws RestaurantNotFoundException {
         if (id == null || id.isEmpty()) throw new InvalidDataException("ID-ul restaurantului este obligatoriu.");
         if (!restaurants.containsKey(id)) {
@@ -93,7 +96,6 @@ public class RestaurantService {
         System.out.println("[OK] Restaurant sters: id=" + id);
     }
 
-    // Delete client
     public void deleteClient(String id) {
         if (id == null || id.isEmpty()) throw new InvalidDataException("ID-ul clientului este obligatoriu.");
         for (int i = 0; i < clients.size(); i++) {
@@ -113,12 +115,12 @@ public class RestaurantService {
         return r;
     }
 
-    public Client findClientById(String id) {
+    public Client findClientById(String id) throws ClientNotFoundException {
         if (id == null || id.isEmpty()) throw new InvalidDataException("ID-ul clientului este obligatoriu.");
         for (Client c : clients) {
             if (c.getId().equals(id)) return c;
         }
-        return null;
+        throw new ClientNotFoundException("Client cu id=" + id + " nu a fost gasit.");
     }
 
     public Map<String, Restaurant> getAllRestaurants() {

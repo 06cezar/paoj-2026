@@ -27,9 +27,7 @@ public class Driver extends Person {
 
     @Override
     public String toString() {
-        String status;
-        if(available) status = "disponibil";
-        else status = "indisponibil";
-        return super.toString() + ", rating=" + rating + ", status=" + status + "]";
+        return "Driver[" + baseFields() + ", rating=" + rating +
+               ", status=" + (available ? "disponibil" : "indisponibil") + "]";
     }
 }

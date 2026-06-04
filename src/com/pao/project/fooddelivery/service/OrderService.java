@@ -21,23 +21,23 @@ import java.util.List;
 public class OrderService {
     private static OrderService instance;
 
-    private final List<Order> orders;     // List<Order> - sortabila prin Comparable
+    private final List<Order> orders;
     private final List<Driver> drivers;
-    private int counter = 1;              // contor separat - nu depinde de size()
+    private int counter = 1;
 
     private OrderService() {
         this.orders = new ArrayList<>();
         this.drivers = new ArrayList<>();
     }
 
-    public static OrderService getInstance() {
+    public static synchronized OrderService getInstance() {
         if (instance == null) {
             instance = new OrderService();
         }
         return instance;
     }
 
-    // Actiunea 3: Inregistreaza sofer
+    // Actiunea 3
     public void registerDriver(Driver driver) {
         if (driver == null) throw new InvalidDataException("Soferul este obligatoriu.");
         for (Driver d : drivers) {
@@ -46,10 +46,11 @@ public class OrderService {
             }
         }
         drivers.add(driver);
+        AuditService.getInstance().log("inregistreaza_sofer");
         System.out.println("[OK] Sofer inregistrat: " + driver.getName());
     }
 
-    // Actiunea 5: Plaseaza comanda
+    // Actiunea 5
     public Order placeOrder(Client client, Restaurant restaurant,
                             List<String> productIds, DeliveryAddress address) {
         if (client == null) throw new InvalidDataException("Clientul este obligatoriu.");
@@ -71,40 +72,52 @@ public class OrderService {
         }
 
         orders.add(order);
+        AuditService.getInstance().log("plaseaza_comanda");
         System.out.println("[OK] Comanda plasata: " + orderId + " | Total: " + order.getTotalPrice() + " RON");
         return order;
     }
 
-    // Actiunea 6: Atribuie sofer la comanda
-    public void assignDriver(String orderId, String driverId) throws OrderNotFoundException, DriverNotFoundException, DriverUnavailableException {
+    // Actiunea 6
+    public void assignDriver(String orderId, String driverId)
+            throws OrderNotFoundException, DriverNotFoundException, DriverUnavailableException {
         Order order = findOrderById(orderId);
+        if (order.getStatus() != OrderStatus.PLACED) {
+            throw new InvalidOrderException("Soferul poate fi atribuit doar comenzilor cu statusul PLACED. Status curent: " + order.getStatus());
+        }
         Driver driver = findDriverById(driverId);
 
         if (!driver.isAvailable()) {
             throw new DriverUnavailableException("Soferul " + driver.getName() + " nu este disponibil.");
         }
 
-        // elibereaza soferul vechi daca exista
         if (order.getDriver() != null) {
             order.getDriver().setAvailable(true);
         }
         order.setDriver(driver);
-        order.setStatus(OrderStatus.IN_DELIVERY);
+        order.setStatus(OrderStatus.IN_PREPARATION);
         driver.setAvailable(false);
+        AuditService.getInstance().log("atribuie_sofer_comanda");
         System.out.println("[OK] Sofer " + driver.getName() + " atribuit comenzii " + orderId);
     }
 
-    // Actiunea 7: Finalizeaza comanda
+    // Actiunea 7
     public void completeOrder(String orderId) throws OrderNotFoundException {
         Order order = findOrderById(orderId);
+        if (order.getStatus() == OrderStatus.DELIVERED) {
+            throw new InvalidOrderException("Comanda este deja livrata.");
+        }
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new InvalidOrderException("Nu se poate finaliza o comanda anulata.");
+        }
         order.setStatus(OrderStatus.DELIVERED);
         if (order.getDriver() != null) {
             order.getDriver().setAvailable(true);
         }
+        AuditService.getInstance().log("finalizeaza_comanda");
         System.out.println("[OK] Comanda " + orderId + " livrata cu succes.");
     }
 
-    // Actiunea 9: Listeaza comenzile unui client (sortate dupa data)
+    // Actiunea 9
     public List<Order> getClientOrders(String clientId) {
         if (clientId == null || clientId.isEmpty()) throw new InvalidDataException("ID-ul clientului este obligatoriu.");
         List<Order> results = new ArrayList<>();
@@ -114,10 +127,11 @@ public class OrderService {
             }
         }
         Collections.sort(results);
+        AuditService.getInstance().log("comenzile_unui_client");
         return results;
     }
 
-    // Actiunea 10: Afiseaza comenzile active
+    // Actiunea 10
     public List<Order> getActiveOrders() {
         List<Order> active = new ArrayList<>();
         for (Order o : orders) {
@@ -126,12 +140,29 @@ public class OrderService {
             }
         }
         Collections.sort(active);
+        AuditService.getInstance().log("comenzi_active");
         return active;
+    }
+
+    // Actiunea 11 (bonus)
+    public void cancelOrder(String orderId) throws OrderNotFoundException {
+        Order order = findOrderById(orderId);
+        if (order.getStatus() == OrderStatus.DELIVERED) {
+            throw new InvalidOrderException("Nu se poate anula o comanda deja livrata.");
+        }
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new InvalidOrderException("Comanda este deja anulata.");
+        }
+        order.setStatus(OrderStatus.CANCELLED);
+        if (order.getDriver() != null) {
+            order.getDriver().setAvailable(true);
+        }
+        AuditService.getInstance().log("anuleaza_comanda");
+        System.out.println("[OK] Comanda " + orderId + " a fost anulata.");
     }
 
     public void deleteOrder(String orderId) throws OrderNotFoundException {
         Order order = findOrderById(orderId);
-        // elibereaza soferul daca comanda era in livrare
         if (order.getDriver() != null && !order.getStatus().equals(OrderStatus.DELIVERED)) {
             order.getDriver().setAvailable(true);
         }

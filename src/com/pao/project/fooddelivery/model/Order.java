@@ -23,7 +23,7 @@ public class Order implements Comparable<Order> {
         if (client == null) throw new InvalidDataException("Clientul este obligatoriu.");
         if (restaurant == null) throw new InvalidDataException("Restaurantul este obligatoriu.");
         if (deliveryAddress == null) throw new InvalidDataException("Adresa de livrare este obligatorie.");
-        
+
         this.id = id;
         this.client = client;
         this.restaurant = restaurant;
@@ -32,7 +32,25 @@ public class Order implements Comparable<Order> {
         this.status = OrderStatus.PLACED;
         this.orderDate = LocalDateTime.now();
         this.totalPrice = 0;
-        // in realitate nu e asignat imediat la constructie soferul, se atribuie ulterior
+    }
+
+    // Constructor folosit de OrderRepository pentru reconstructia din baza de date
+    public Order(String id, Client client, Restaurant restaurant,
+                 DeliveryAddress deliveryAddress, LocalDateTime orderDate) {
+        if (id == null || id.isEmpty()) throw new InvalidDataException("ID-ul comenzii este obligatoriu.");
+        if (client == null) throw new InvalidDataException("Clientul este obligatoriu.");
+        if (restaurant == null) throw new InvalidDataException("Restaurantul este obligatoriu.");
+        if (deliveryAddress == null) throw new InvalidDataException("Adresa de livrare este obligatorie.");
+        if (orderDate == null) throw new InvalidDataException("Data comenzii este obligatorie.");
+
+        this.id = id;
+        this.client = client;
+        this.restaurant = restaurant;
+        this.deliveryAddress = deliveryAddress;
+        this.products = new ArrayList<>();
+        this.status = OrderStatus.PLACED;
+        this.orderDate = orderDate;
+        this.totalPrice = 0;
     }
 
     public void addProduct(Product product) {
